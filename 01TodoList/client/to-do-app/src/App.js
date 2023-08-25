@@ -26,7 +26,7 @@ function App() {
         const text = prompt('Enter task name:');
         const newTodo = { _id: newId, text, isCompleted: false };
 
-        setTodos(state => [newTodo, ...state])
+        setTodos(state => [...state, newTodo])
     }
 
     return (
