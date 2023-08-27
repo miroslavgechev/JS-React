@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { getAllUsers } from './services/userService';
+import { getAllUsers, createUser, deleteUser, updateUser } from './services/userService';
 
 import "./App.css";
 import Footer from "./components/Footer";
@@ -20,6 +20,34 @@ function App() {
             )
     }, [])
 
+    async function onUserCreateSubmit(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.currentTarget);
+        const data = Object.fromEntries(formData.entries());
+
+        const createdUser = await createUser(data);
+
+        setUsers(prevState => [...prevState, createdUser]);
+
+    }
+
+    async function onUserUpdateSubmit(e, userId) {
+        e.preventDefault();
+
+        const formData = new FormData(e.currentTarget);
+        const data = Object.fromEntries(formData.entries());
+
+        const updatedUser = await updateUser(userId, data);
+
+        setUsers(state => state.map(u => u._id === userId ? updatedUser : u));
+    }
+
+    async function onUserDelete(userId) {
+        await deleteUser(userId)
+
+        setUsers(state => state.filter(u => u._id !== userId))
+    }
 
     return (
         <>
@@ -29,9 +57,8 @@ function App() {
                 <section className="card users-container">
                     <Search />
 
-                    <UserList users={users} />
+                    <UserList users={users} onUserCreateSubmit={onUserCreateSubmit} onUserDelete={onUserDelete} onUserUpdateSubmit={onUserUpdateSubmit} />
 
-                    <button className="btn-add btn">Add new user</button>
                 </section>
 
                 {/* Add other components here */}
