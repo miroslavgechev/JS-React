@@ -20,26 +20,24 @@ async function request(method, url, data) {
     try {
         const response = await fetch(url, options);
 
-        // if (!response.ok) {
+        if (!response.ok) {
 
-        //     if (response.status === 403) {
-        //         clearUserData()
-        //     }
+            // if (response.status === 403) {
+            //     clearUserData()
+            // }
 
-        //     const error = await response.json();
-        //     throw new Error(error.message);
-        // }
+            const error = await response.json();
+            throw new Error(error.message);
+        }
 
-        // if (response.status === 204) {
-        //     return response;
-        // };
+        if (response.status === 204) {
+            return response;
+        };
 
         return await response.json();
 
-    } catch {
-        return {};
-        // alert(err.message);
-        // throw err;
+    } catch (error) {
+        throw error;
     }
 
 }
