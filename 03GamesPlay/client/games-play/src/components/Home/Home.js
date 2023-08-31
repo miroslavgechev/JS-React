@@ -1,4 +1,4 @@
-export function Home() {
+export const Home = () => {
     return (
         <section id="welcome-world">
 
@@ -53,6 +53,5 @@ export function Home() {
                 <p className="no-articles">No games yet</p>
             </div>
         </section>
-
-    )
+    );
 }

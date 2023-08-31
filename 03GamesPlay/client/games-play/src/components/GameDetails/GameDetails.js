@@ -1,38 +1,48 @@
-import { useParams } from 'react-router-dom';
-import { getOneById } from '../../services/gameService';
-import { useEffect, useState } from 'react';
-import { addComment } from '../../services/commentService.js';
+import { useEffect, useState, useContext } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 
-export function GameDetails() {
-    const { gameId } = useParams();
-    const [game, setGame] = useState({});
+import { gameServiceFactory } from '../../services/gameService';
+import { useService } from '../../hooks/useService';
+import { AuthContext } from '../../contexts/AuthContext';
+
+export const GameDetails = () => {
+    const { userId } = useContext(AuthContext);
     const [username, setUsername] = useState('');
     const [comment, setComment] = useState('');
+    const { gameId } = useParams();
+    const [game, setGame] = useState({});
+    const gameService = useService(gameServiceFactory)
+    const navigate = useNavigate();
 
     useEffect(() => {
-        getOneById(gameId)
-            .then(res => {
-                setGame(res);
+        gameService.getOne(gameId)
+            .then(result => {
+                setGame(result);
             })
+    }, [gameId]);
 
-    }, [gameId])
-
-    async function onCommentSubmit(e) {
+    const onCommentSubmit = async (e) => {
         e.preventDefault();
-        const result = await addComment(gameId, { username, comment })
 
-        setGame(state => ({...state, comments: {...state.comments, [result._id]: result}}));
+        const result = await gameService.addComment(gameId, {
+            username,
+            comment,
+        });
+
+        setGame(state => ({ ...state, comments: { ...state.comments, [result._id]: result } }));
         setUsername('');
         setComment('');
-    }
+    };
 
-    function onUsernameChange(e) {
-        setUsername(e.target.value);
-    }
+    const isOwner = game._ownerId === userId;
 
-    function onCommentChange(e) {
-        setComment(e.target.value);
-    }
+    const onDeleteClick = async () => {
+        await gameService.delete(game._id);
+
+        // TODO: delete from state
+
+        navigate('/catalog');
+    };
 
     return (
         <section id="game-details">
@@ -51,22 +61,25 @@ export function GameDetails() {
                 <div className="details-comments">
                     <h2>Comments:</h2>
                     <ul>
-                        {game.comments && Object.values(game.comments).map(
-                            x => <li key={x._id} className="comment">
+                        {game.comments && Object.values(game.comments).map(x => (
+                            <li key={x._id} className="comment">
                                 <p>{x.username}: {x.comment}</p>
                             </li>
-                        )}
+                        ))}
                     </ul>
 
-                    {/* {!Object.values(game.comments).length && <p className="no-comment">No comments.</p>} */}
-
+                    {/* {!Object.values(game.comments).length && (
+                        <p className="no-comment">No comments.</p>
+                    )} */}
                 </div>
 
                 {/* <!-- Edit/Delete buttons ( Only for creator of this game )  --> */}
-                <div className="buttons">
-                    <a href="#" className="button">Edit</a>
-                    <a href="#" className="button">Delete</a>
-                </div>
+                {isOwner && (
+                    <div className="buttons">
+                        <Link to={`/catalog/${game._id}/edit`} className="button">Edit</Link>
+                        <button className="button" onClick={onDeleteClick}>Delete</button>
+                    </div>
+                )}
             </div>
 
             {/* <!-- Bonus --> */}
@@ -74,12 +87,12 @@ export function GameDetails() {
             <article className="create-comment">
                 <label>Add new comment:</label>
                 <form className="form" onSubmit={onCommentSubmit}>
-                    <input type="text" name="username" placeholder="Username" value={username} onChange={onUsernameChange} />
-                    <textarea name="comment" placeholder="Comment......" value={comment} onChange={onCommentChange}></textarea>
+                    <input type="text" name="username" placeholder='Пешо' value={username} onChange={(e) => setUsername(e.target.value)} />
+                    <textarea name="comment" placeholder="Comment......" value={comment} onChange={(e) => setComment(e.target.value)}></textarea>
                     <input className="btn submit" type="submit" value="Add Comment" />
                 </form>
             </article>
 
         </section>
-    )
-}
+    );
+};

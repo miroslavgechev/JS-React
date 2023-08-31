@@ -1,49 +1,46 @@
-async function request(method, url, data) {
+const request = async (method, token, url, data) => {
+    const options = {};
 
-    const options = {
-        method,
-        headers: {}
-    }
+    if (method !== 'GET') {
+        options.method = method;
 
-    if (data !== undefined) {
-        options.headers = { 'Content-Type': 'application/json' };
-        options.body = JSON.stringify(data);
-    }
+        if (data) {
+            options.headers = {
+                'content-type': 'application/json',
+            };
 
-    // const user = getUserData();
-    // if (user) {
-    //     const token = user.accessToken;
-    //     options.headers['X-Authorization'] = token;
-    // };
-
-
-    try {
-        const response = await fetch(url, options);
-
-        if (!response.ok) {
-
-            // if (response.status === 403) {
-            //     clearUserData()
-            // }
-
-            const error = await response.json();
-            throw new Error(error.message);
+            options.body = JSON.stringify(data);
         }
-
-        if (response.status === 204) {
-            return response;
-        };
-
-        return await response.json();
-
-    } catch (error) {
-        throw error;
     }
 
-}
+    if (token) {
+        options.headers = {
+            ...options.headers,
+            'X-Authorization': token,
+        };
+    }
 
-export const get = request.bind(null, 'GET');
-export const post = request.bind(null, 'POST');
-export const put = request.bind(null, 'PUT');
-export const patch = request.bind(null, 'PATCH');
-export const del = request.bind(null, 'DELETE');
+    const response = await fetch(url, options);
+
+    if (response.status === 204) {
+        return {};
+    }
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw result;
+    }
+
+    return result;
+};
+
+export const requestFactory = (token) => {
+    return {
+        get: request.bind(null, 'GET', token),
+        post: request.bind(null, 'POST', token),
+        put: request.bind(null, 'PUT', token),
+        patch: request.bind(null, 'PATCH', token),
+        delete: request.bind(null, 'DELETE', token),
+    }
+};
